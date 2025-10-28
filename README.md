@@ -1,43 +1,45 @@
-<!-- markdownlint-disable -->
+[![Terraform](https://img.shields.io/badge/Terraform-≥1.5-blue?logo=terraform)](https://www.terraform.io/)
+[![AWS](https://img.shields.io/badge/AWS-Cloud%20Intelligence-orange?logo=amazon-aws&logoColor=white)](https://aws.amazon.com/solutions/cudos/)
+[![QuickSight](https://img.shields.io/badge/Dashboards-QuickSight-232F3E?logo=amazon-aws)](https://aws.amazon.com/quicksight/)
+[![Athena](https://img.shields.io/badge/Data-Athena-0073bb?logo=amazon-aws)](https://aws.amazon.com/athena/)
+[![Glue](https://img.shields.io/badge/ETL-Glue-7D3C98?logo=amazon-aws)](https://aws.amazon.com/glue/)
+[![FinOps](https://img.shields.io/badge/Focus-FinOps-blue)](https://www.finops.org/)
+[![CI](https://img.shields.io/github/actions/workflow/status/lauj0rge/terraform-aws-cudos/ci.yml?label=CI%20Build)](https://github.com/lauj0rge/terraform-aws-cudos/actions)
 
-<a href="https://www.appvia.io/"><img src="https://github.com/appvia/terraform-aws-cudos/blob/main/docs/banner.jpg?raw=true" alt="Appvia Banner"/></a><br/><p align="right"> <a href="https://registry.terraform.io/modules/appvia/cudos/aws/latest"><img src="https://img.shields.io/static/v1?label=APPVIA&message=Terraform%20Registry&color=191970&style=for-the-badge" alt="Terraform Registry"/></a></a> <a href="https://github.com/appvia/terraform-aws-cudos/releases/latest"><img src="https://img.shields.io/github/release/appvia/terraform-aws-cudos.svg?style=for-the-badge&color=006400" alt="Latest Release"/></a> <a href="https://appvia-community.slack.com/join/shared_invite/zt-1s7i7xy85-T155drryqU56emm09ojMVA#/shared-invite/email"><img src="https://img.shields.io/badge/Slack-Join%20Community-purple?style=for-the-badge&logo=slack" alt="Slack Community"/></a> <a href="https://github.com/appvia/terraform-aws-cudos/graphs/contributors"><img src="https://img.shields.io/github/contributors/appvia/terraform-aws-cudos.svg?style=for-the-badge&color=FF8C00" alt="Contributors"/></a>
 
-<!-- markdownlint-restore -->
-<!--
-  ***** CAUTION: DO NOT EDIT ABOVE THIS LINE ******
--->
+# terraform-aws-cudos
 
-![Github Actions](https://github.com/appvia/terraform-aws-cudos/actions/workflows/terraform.yml/badge.svg)
+A Terraform module that deploys the **AWS Cloud Intelligence Dashboards (CUDOS)** framework — a collection of **AWS QuickSight dashboards** that visualize cost, usage, and operational insights across your AWS environment.
 
-# Terraform AWS Cloud Intelligence Dashboards
+---
 
-<p align="center">
-  <img src="https://github.com/appvia/terraform-aws-cudos/blob/main/docs/cudos.png?raw=true" alt="CUDOS"/>
-</p>
+## Overview
 
-## Description
+This module automates deployment of the **Cloud Intelligence Dashboards (CID)** solution, including:
 
-The purpose of this module is to deploy the AWS Cloud Intelligence Dashboards (CUDOS) framework. The framework is a collection of dashboards that provide insights into your AWS environment. The dashboards are built using AWS QuickSight and are designed to provide insights into your AWS environment.
+* **CUDOS Dashboard** – overall AWS cost and usage insights
+* **Cost Intelligence Dashboard** – breakdown of spend by service and account
+* **KPI Dashboard** – high-level financial and operational metrics
+* **Compute Optimizer Dashboard** – cost efficiency and right-sizing recommendations
 
-## Usage
+The dashboards are built on **AWS QuickSight** and query **Athena views** over your **Cost and Usage Reports (CUR)**.
 
-Add example usage here
+---
+
+## Example Usage
 
 ```hcl
 module "cudos_framework" {
-  source = "../.."
+  source = "github.com/lauj0rge/terraform-aws-cudos"
 
-  dashbords_bucket_name              = var.dashboard_bucket_name
+  dashboard_bucket_name              = "my-cudos-bucket"
   enable_compute_optimizer_dashboard = true
   enable_cost_intelligence_dashboard = true
   enable_cudos_dashboard             = true
-  enable_cudos_v5_dashboard          = true
   enable_kpi_dashboard               = true
   enable_sso                         = true
-  enable_tao_dashboard               = false
   saml_metadata                      = file("${path.module}/assets/saml-metadata.xml")
-  quicksight_dashboard_owner         = var.quicksight_dashboard_owner
-  tags                               = var.tags
+  quicksight_dashboard_owner         = "myuser@example.com"
 
   providers = {
     aws.management              = aws.management
@@ -48,50 +50,50 @@ module "cudos_framework" {
 }
 ```
 
-## Deployment Architecture
+---
 
-The following is taken from the Cloud Intelligence Dashboards framework, and depicts the deployment architecture:
+## Architecture
 
-<p align="center">
-  <img src="https://github.com/appvia/terraform-aws-cudos/blob/main/docs/cid-deployment.png?raw=true" alt="Deployment Architecture"/>
-</p>
+```
+AWS CUR (S3)
+     ↓
+AWS Glue → Athena → QuickSight Dashboards
+```
 
-## References
+* **S3:** stores the Cost and Usage Reports (CUR)
+* **Glue:** creates tables and metadata for Athena
+* **Athena:** queries cost and usage data
+* **QuickSight:** visualizes cost, usage, and efficiency trends
 
-- [Identity Center integration](https://cloudyadvice.com/2022/04/29/implementing-cudos-cost-intelligence-dashboards-for-an-enterprise/)
-- [CID Framework](https://github.com/awslabs/cid-framework)
-- [CUDOS Deployment](https://github.com/aws-samples/aws-cudos-framework-deployment)
+---
 
-## Upgrading the dashboards
+## Requirements
 
-Due to the level of customization that can be done with the dashboards, it is recommended to follow the official documentation to upgrade the dashboards. The following steps are a general guide to upgrade the dashboards:
+* AWS CUR 2.0 configured and accessible
+* AWS QuickSight Enterprise edition enabled
+* Terraform ≥ 1.5
+* IAM permissions to deploy CloudFormation and QuickSight resources
 
-1. Download the latest version of `cid-cmd`, the instructions can be found [here](https://github.com/aws-samples/aws-cudos-framework-deployment?tab=readme-ov-file#install)
-2. Run the `cic-cmd` command to upgrade the dashboards, selecting each of the dashboards that you want to upgrade.
-3. Pay attention the Athena views, ensuring any customizations are not overwritten.
+---
 
-## Update Documentation
+## Deployment Steps
 
-The `terraform-docs` utility is used to generate this README. Follow the below steps to update:
+1. Configure your CUR and Athena views.
+2. Run:
 
-1. Make changes to the `.terraform-docs.yml` file
-2. Fetch the `terraform-docs` binary (https://terraform-docs.io/user-guide/installation/)
-3. Run `terraform-docs markdown table --output-file ${PWD}/README.md --output-mode inject .`account
+   ```bash
+   terraform init
+   terraform apply
+   ```
+3. Open **AWS QuickSight → Dashboards** to view CUDOS dashboards.
 
-## Enable Cora Data Exports
+---
 
-To enable the Cora Data Exports, please see https://catalog.workshops.aws/awscid/en-US/dashboards/additional/cora for more information, you simply have to enable the `var.enable_cora_data_exports`. This will deploy an additional [cloudformation](./assets/cloudformation/cudos/data-exports-aggregation.yaml) with the management account.
+## Learn More
 
-<!-- BEGIN_TF_DOCS -->
-## Providers
+* [Cloud Intelligence Dashboards (CID)](https://github.com/awslabs/cid-framework)
+* [CUDOS Framework](https://aws.amazon.com/solutions/cudos/)
+* [QuickSight Pricing](https://aws.amazon.com/quicksight/pricing/)
 
-No providers.
 
-## Inputs
 
-No inputs.
-
-## Outputs
-
-No outputs.
-<!-- END_TF_DOCS -->
